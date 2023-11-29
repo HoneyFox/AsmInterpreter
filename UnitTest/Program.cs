@@ -24,17 +24,31 @@ namespace UnitTest
 			AsmInterpreter asmInterpreter = new AsmInterpreter();
 			UserCommandModuleHandler.RegisterCodeHandler(HandleTriggerCommand);
 
-			asmInterpreter.m_namedVariables.Add(new NamedValueStorage("MissionTime", 0.0f));
-			asmInterpreter.m_namedVariables.Add(new NamedValueStorage("AirDensity", 0.0f));
-			asmInterpreter.m_namedVariables.Add(new NamedValueStorage("TotalAvailableThrust", 0.0f));
+			asmInterpreter.m_namedStorages.Add(new NamedValueStorage("MissionTime", 0.0f));
+			asmInterpreter.m_namedStorages.Add(new NamedValueStorage("AirDensity", 0.0f));
+			asmInterpreter.m_namedStorages.Add(new NamedValueStorage("TotalAvailableThrust", 0.0f));
 			string testCode =
 @"// Initialize variables
 var boosterDecoupled = 0
 var fairingsDecoupled = 0
 var solarPanelsExpanded = 0
+var r = [ 0 ]
+var test = [ 0 1 2 3 4 5 ]
+var i
+var item
+var sum
+var length
 
 // Wait for update() calls.
 yield
+
+len test length
+length -= 1 // length = len(test) - 1
+for i = 0 to length
+	list test i item // item = test[i]
+	sum += item
+end
+print sum
 
 // Main loop goes here.
 r[0] = boosterDecoupled

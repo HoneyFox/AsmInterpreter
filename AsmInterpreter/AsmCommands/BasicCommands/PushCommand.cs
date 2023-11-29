@@ -5,6 +5,7 @@ using System.Text;
 
 namespace AssemblyInterpreter
 {
+	[Obsolete()]
 	public class PushCommand : AsmCommand
 	{
 		public ValueStorage source = null;

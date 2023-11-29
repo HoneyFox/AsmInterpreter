@@ -25,6 +25,11 @@ namespace AssemblyInterpreter
 			parent.instructionIndex++;
 		}
 
+		public virtual void Reset()
+		{
+
+		}
+
 		public AsmInterpreter parent = null;
 	}
 }

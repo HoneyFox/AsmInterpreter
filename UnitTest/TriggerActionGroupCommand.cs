@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
+//using UnityEngine;
 using AssemblyInterpreter;
 
 namespace UnitTest
@@ -21,14 +21,14 @@ namespace UnitTest
 
 		public override void Run()
 		{
-			KSPActionGroup group = KSPActionGroup.None;
-			if(Enum.TryParse<KSPActionGroup>(actionGroupName, out group))
+			//KSPActionGroup group = KSPActionGroup.None;
+			//if(Enum.TryParse<KSPActionGroup>(actionGroupName, out group))
 			{
 				//actionGroupController.FireAction(group, KSPActionType.Activate);
 				//Debug.Log("Firing Action Group: " + actionGroupName);
 				Console.WriteLine("Firing Action Group: " + actionGroupName);
 			}
-			else
+			//else
 			{
 				//Debug.Log("Invalid Action Group Name.");
 			}

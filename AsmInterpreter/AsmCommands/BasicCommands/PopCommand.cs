@@ -5,7 +5,8 @@ using System.Text;
 
 namespace AssemblyInterpreter
 {
-	public class PopCommand : AsmCommand
+    [Obsolete()]
+    public class PopCommand : AsmCommand
 	{
 		public ValueStorage target = null;
 

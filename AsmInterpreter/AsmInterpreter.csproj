@@ -44,16 +44,26 @@
     <Compile Include="AsmCommands\BasicCommands\AssignmentCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\CalculationCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\EndCommand.cs" />
+    <Compile Include="AsmCommands\BasicCommands\ForCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\IfCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\JumpCommand.cs" />
+    <Compile Include="AsmCommands\BasicCommands\PrintCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListDequeueCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListAddCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\NoOperationCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\PopCommand.cs" />
     <Compile Include="AsmCommands\BasicCommands\PushCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListIndexerCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListLengthCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListPopCommand.cs" />
+    <Compile Include="AsmCommands\ExtendedCommands\ListRemoveCommand.cs" />
     <Compile Include="AsmCommands\UserCommands\UserCommandModuleHandler.cs" />
     <Compile Include="AsmInterpreter.cs" />
     <Compile Include="Misc\JumpLabel.cs" />
     <Compile Include="AsmCommands\BasicCommands\YieldCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ValueStorage\INamedStorage.cs" />
+    <Compile Include="ValueStorage\ValueStorageList.cs" />
     <Compile Include="ValueStorage\NamedValueStorage.cs" />
     <Compile Include="ValueStorage\ValueStorage.cs" />
   </ItemGroup>

@@ -31,18 +31,50 @@ namespace AssemblyInterpreter
 			return null;
 		}
 
-		public List<NamedValueStorage> m_namedVariables = new List<NamedValueStorage>();
-		public NamedValueStorage GetVariableByName(string name)
+		public List<INamedStorage> m_namedStorages = new List<INamedStorage>();
+		public ValueStorage GetVariableByName(string name)
 		{
-			foreach (NamedValueStorage obj in m_namedVariables)
-			{
-				if (obj.name == name)
-				{
-					return obj;
-				}
-			}
-			return null;
-		}
+            if (name.Contains("[") && name.Contains("]"))
+            {
+                int indexStart = name.IndexOf("[");
+                int indexEnd = name.LastIndexOf("]");
+                string listName = name.Substring(0, indexStart);
+                string indexStr = name.Substring(indexStart + 1, indexEnd - indexStart - 1);
+
+                ValueStorageList list = GetNamedStorageByName(listName) as ValueStorageList;
+                if (list != null)
+                {
+                    if (int.TryParse(indexStr, out int index))
+                    {
+                        return list.GetValueStorage(index);
+                    }
+                    else
+                    {
+						throw new InvalidOperationException("Non constant index not accepted.");
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+				return GetNamedStorageByName(name) as ValueStorage;
+            }
+        }
+
+		public INamedStorage GetNamedStorageByName(string name)
+		{
+            foreach (INamedStorage obj in m_namedStorages)
+            {
+                if (obj.Name == name)
+                {
+                    return obj;
+                }
+            }
+            return null;
+        }
 
 		public List<ValueStorage> m_constants = new List<ValueStorage>();
 		
@@ -164,15 +196,45 @@ namespace AssemblyInterpreter
 				if (lineParts[0].Equals("var", StringComparison.CurrentCultureIgnoreCase))
 				{
 					string name = lineParts[1];
-					if (m_namedVariables.Exists((NamedValueStorage nvs) => { return nvs.name == name; }) == false)
+					if (m_namedStorages.Exists((INamedStorage ins) => { return ins.Name == name; }) == false)
 					{
 						float value = 0.0f;
-						if (lineParts.Length == 4 && lineParts[2] == "=")
+						if (lineParts.Length == 2)
 						{
-							value = Convert.ToSingle(lineParts[3]);
-						}
-						NamedValueStorage newNamedValueStorage = new NamedValueStorage(name, value);
-						m_namedVariables.Add(newNamedValueStorage);
+                            NamedValueStorage newNamedValueStorage = new NamedValueStorage(name, value);
+                            m_namedStorages.Add(newNamedValueStorage);
+                        }
+                        else if (lineParts.Length == 4 && lineParts[2] == "=")
+                        {
+                            value = Convert.ToSingle(lineParts[3]);
+                            NamedValueStorage newNamedValueStorage = new NamedValueStorage(name, value);
+                            m_namedStorages.Add(newNamedValueStorage);
+                        }
+                        else if (lineParts.Length >= 5 && lineParts[2] == "=")
+						{
+							// var l = [ ]
+							if (lineParts[3].Contains("[") && lineParts[lineParts.Length - 1].Contains("]"))
+							{
+								if (lineParts.Length > 5)
+								{
+									ValueStorage[] values = new ValueStorage[lineParts.Length - 5];
+									for (int i = 4; i < lineParts.Length - 1; ++i)
+									{
+										value = Convert.ToSingle(lineParts[i]);
+										ValueStorage newValueStorage = new ValueStorage();
+										newValueStorage.SetValue(value);
+										values[i - 4] = newValueStorage;
+									}
+									ValueStorageList vsl = new ValueStorageList(name, values);
+									m_namedStorages.Add(vsl);
+								}
+								else
+								{
+									ValueStorageList vsl = new ValueStorageList(name);
+                                    m_namedStorages.Add(vsl);
+                                }
+                            }
+                        }
 					}
 
 					NoOperationCommand newCmd = new NoOperationCommand(this, lineParts);
@@ -306,6 +368,15 @@ namespace AssemblyInterpreter
 					newCmd.targetInstructionIndex = correspondingNode + 1;
 					m_commands.Add(newCmd);
 				}
+				else if (lineParts[0].Equals("for", StringComparison.CurrentCultureIgnoreCase))
+				{
+					int correspondingNode = FindCorrespondingEndNode(codeLines, lineIndex);
+					if (correspondingNode == -1)
+						throw new InvalidOperationException("Invalid for block.");
+					ForCommand newCmd = new ForCommand(this, lineParts);
+					newCmd.targetInstructionIndex = correspondingNode + 1;
+					m_commands.Add(newCmd);
+				}
 				else if (lineParts[0].Equals("end", StringComparison.CurrentCultureIgnoreCase))
 				{
 					string startNodeType = "";
@@ -323,18 +394,59 @@ namespace AssemblyInterpreter
 						newCmd.loopInstructionIndex = correspondingNode;
 						m_commands.Add(newCmd);
 					}
+					else if (startNodeType == "for")
+					{
+						EndCommand newCmd = new EndCommand(this, lineParts);
+						newCmd.loopInstructionIndex = correspondingNode;
+						m_commands.Add(newCmd);
+					}
 				}
-				else if (lineParts[0].Equals("push", StringComparison.CurrentCultureIgnoreCase))
+                else if (lineParts[0].Equals("append", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListAddCommand newCmd = new ListAddCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("remove", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListRemoveCommand newCmd = new ListRemoveCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("enqueue", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListEnqueueCommand newCmd = new ListEnqueueCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("dequeue", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListDequeueCommand newCmd = new ListDequeueCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("push", StringComparison.CurrentCultureIgnoreCase))
 				{
-					PushCommand newCmd = new PushCommand(this, lineParts);
+                    ListPushCommand newCmd = new ListPushCommand(this, lineParts);
 					m_commands.Add(newCmd);
 				}
 				else if (lineParts[0].Equals("pop", StringComparison.CurrentCultureIgnoreCase))
 				{
-					PopCommand newCmd = new PopCommand(this, lineParts);
+                    ListPopCommand newCmd = new ListPopCommand(this, lineParts);
 					m_commands.Add(newCmd);
 				}
-				else if (lineParts[0].Equals("yield", StringComparison.CurrentCultureIgnoreCase))
+                else if (lineParts[0].Equals("len", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListLengthCommand newCmd = new ListLengthCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("list", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ListIndexerCommand newCmd = new ListIndexerCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("print", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    PrintCommand newCmd = new PrintCommand(this, lineParts);
+                    m_commands.Add(newCmd);
+                }
+                else if (lineParts[0].Equals("yield", StringComparison.CurrentCultureIgnoreCase))
 				{
 					YieldCommand newCmd = new YieldCommand(this, lineParts);
 					m_commands.Add(newCmd);
@@ -378,7 +490,11 @@ namespace AssemblyInterpreter
 				{
 					blockLevel++;
 				}
-				if (lineParts[0].Equals("else", StringComparison.CurrentCultureIgnoreCase))
+                if (lineParts[0].Equals("for", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    blockLevel++;
+                }
+                if (lineParts[0].Equals("else", StringComparison.CurrentCultureIgnoreCase))
 				{
 					if (blockLevel == 1)
 					{
@@ -426,7 +542,16 @@ namespace AssemblyInterpreter
 						return currentLineIndex;
 					}
 				}
-				if (lineParts[0].Equals("end", StringComparison.CurrentCultureIgnoreCase))
+                if (lineParts[0].Equals("for", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    blockLevel--;
+                    if (blockLevel == 0)
+                    {
+                        startNodeType = "for";
+                        return currentLineIndex;
+                    }
+                }
+                if (lineParts[0].Equals("end", StringComparison.CurrentCultureIgnoreCase))
 				{
 					blockLevel++;
 				}
@@ -448,6 +573,8 @@ namespace AssemblyInterpreter
 
 		public void Reset()
 		{
+			for (int i = 0; i < m_commands.Count; i++)
+				m_commands[i].Reset();
 			for(int i = 0; i < m_registers.Length; i++)
 				m_registers[i].SetValue(0.0f);
 		}
